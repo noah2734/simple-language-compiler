@@ -5,6 +5,14 @@ void Parser::syntax_error() {
     exit(1);
 }
 
+stackNode Parser::terminal_peek() {
+    for (int i = stack.size() - 1; i >= 0; i--) {
+        if (stack[i].type == TERM) {
+            return stack[i];
+        }
+    }
+}
+
 Token Parser::expect(TokenType expected_type) 
 {
     Token t = lexer.GetToken();
