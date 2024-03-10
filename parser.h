@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 #include "lexer.h"
-#include "AST.h"
+
 
 typedef enum {
     EXPR,
@@ -12,6 +12,7 @@ typedef enum {
 } snodeType;
 
 typedef enum {
+    EQUAL_OP,
     ID_OP,
     MINUS_OP,
     PLUS_OP,
@@ -31,11 +32,11 @@ typedef enum {
 
 struct stackNode {
     snodeType type;
-    union exprNode *expr;
+    exprNode *expr;
     Token term;
 };
 
-struct treeNode {
+struct exprNode {
     operatorType opType;
 
     exprType type;
@@ -45,17 +46,18 @@ struct treeNode {
         int line_no;
     };
 
-    struct child {
-        struct treeNode *left;
-        struct treeNode *right;
-    };
+    
+    struct exprNode* left;
+    struct exprNode* right;
+    struct exprNode* parent;
 
     struct array {
-        struct treeNode *arrayexpr;
+        struct exprNode *arrayexpr;
         int line_no;
     };
 
 };
+
 
 class Parser {
 
@@ -78,11 +80,17 @@ private:
 /* |$| */   {'>', '>', '>', '>', 'e', '>', 'e', 'e', '>', '>', '>', 'a'},// 11
     };
     LexicalAnalyzer lexer;
-    AST tree;
+    exprNode* root;
     std::vector<stackNode> stack;
     std::vector<std::string> scalar_IDs;
     std::vector<std::string> array_IDs;
+    std::string currentSymbols;
+    int symbolIndex;
 public:
+
+    Parser() {
+        root->opType = EQUAL_OP;
+    }
 
     Token expect(TokenType expected_type);
 
@@ -110,19 +118,19 @@ public:
 
     void parse_output_stmt();
 
-    A_Node* parse_variable_access();
+    exprNode* parse_variable_access();
 
-    A_Node* parse_expr();
+    exprNode* parse_expr();
 
     void parse_primary();
 
-    
+    Token get_symbol();
+
+    Token peek_symbol();
 
     stackNode terminal_peek();
 
-    
-
-
+    int getPrecedenceKey(Token token);
 };
 
 #endif  
