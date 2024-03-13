@@ -26,25 +26,18 @@ typedef enum {
     SCALAR_E,
     ARRAY_E,
     ARRAY_DECL,
-    ERROR
+    ERROR_E
 } exprType;
-
-
-struct stackNode {
-    snodeType type;
-    exprNode *expr;
-    Token term;
-};
 
 struct exprNode {
     operatorType opType;
 
     exprType type;
 
-    struct id {
-        std::string varName;
-        int line_no;
-    };
+    
+    std::string varName;
+    int line_no;
+    
 
     
     struct exprNode* left;
@@ -56,6 +49,12 @@ struct exprNode {
         int line_no;
     };
 
+};
+
+struct stackNode {
+    snodeType type;
+    exprNode *expr;
+    Token term;
 };
 
 
@@ -80,17 +79,12 @@ private:
 /* |$| */   {'>', '>', '>', '>', 'e', '>', 'e', 'e', '>', '>', '>', 'a'},// 11
     };
     LexicalAnalyzer lexer;
-    exprNode* root;
+    std::vector<exprNode*> treeRoots;
     std::vector<stackNode> stack;
     std::vector<std::string> scalar_IDs;
     std::vector<std::string> array_IDs;
-    std::string currentSymbols;
-    int symbolIndex;
-public:
 
-    Parser() {
-        root->opType = EQUAL_OP;
-    }
+public:
 
     Token expect(TokenType expected_type);
 
@@ -122,15 +116,19 @@ public:
 
     exprNode* parse_expr();
 
-    void parse_primary();
-
-    Token get_symbol();
-
     Token peek_symbol();
 
     stackNode terminal_peek();
 
     int getPrecedenceKey(Token token);
+
+    void shift();   
+
+    void reduce();
+
+    void traverse_and_print(exprNode* node);
+
+    void printTree();
 };
 
 #endif  

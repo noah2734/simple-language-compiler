@@ -9,6 +9,7 @@
 #include "execute.h"
 #include "tasks.h"
 
+
 using namespace std;
 
 
@@ -42,7 +43,7 @@ int main (int argc, char* argv[])
         case 3: instNode* code;
 		code = parse_and_generate_statement_list();
 		cout << "1234567890" << "testing" << "testing" << endl;
-		execute_inst_list(code);
+		//execute_inst_list(code);
 		cout << "1234567890" << "testing" << "testing" << endl;
             break;
 

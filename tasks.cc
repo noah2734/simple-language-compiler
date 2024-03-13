@@ -5,12 +5,16 @@
 #include "execute.h"
 #include "tasks.h"
 
+
 using namespace std;
 
 
 // Task 1
 void parse_and_generate_AST()
 {
+    Parser parser;
+    parser.parse_program();
+    parser.printTree();
 	cout << "1" << endl;
 }
 

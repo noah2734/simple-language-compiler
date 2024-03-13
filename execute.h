@@ -41,6 +41,6 @@ struct instNode {
 bool valid_instType(InstType);
 bool valid_addrType(AddrType);
 void print_instNode(struct instNode *);
-void execute_inst_list(struct instNode *);
+//void execute_inst_list(struct instNode *);
 
 #endif
