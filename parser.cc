@@ -290,42 +290,67 @@ void Parser::parse_output_stmt()
 
 exprNode* Parser::parse_variable_access()
 {
-    exprNode* left_child_of_root = new exprNode();
     Token t = expect(ID);
 
     exprNode* leftnode = new exprNode();
     leftnode->opType = ID_OP;
     leftnode->varName = t.lexeme;
 
-    expect(LBRAC);
-
     t = lexer.peek(1);
 
-    exprNode* rightnode = new exprNode();
+    if (t.token_type == LBRAC) {
+        expect(LBRAC);
 
-    if (t.token_type == DOT) {
-        expect(DOT);
-        expect(RBRAC);
-        left_child_of_root->opType = WHOLE_ARRAY_OP;
-        left_child_of_root->left = leftnode;
-        rightnode->varName = ".";
-        left_child_of_root->right = rightnode;
-        rightnode->parent = left_child_of_root;
-        leftnode->parent = left_child_of_root;
-        return left_child_of_root;
-    } else if (t.token_type == LPAREN || t.token_type == ID || t.token_type == NUM) {
-        rightnode = parse_expr();
-        expect(RBRAC);
-        left_child_of_root->opType = ARRAY_ELEM_OP;
-        left_child_of_root->left = leftnode;
-        left_child_of_root->right = rightnode;
-        rightnode->parent = left_child_of_root;
-        leftnode->parent = left_child_of_root;
-        return left_child_of_root;
-    } else {
-        std::cout << "@parse_variable_access";
-        syntax_error();
-        return nullptr;
+        exprNode* rightnode = new exprNode();
+
+        t = lexer.peek(1);
+
+        if (t.token_type == DOT) {
+            //          []
+            //       ____|____
+            //       |       |
+            //      ID      DOT 
+            expect(DOT);
+
+            expect(RBRAC);
+
+            exprNode* left_child_of_root = new exprNode();
+
+            left_child_of_root->opType = WHOLE_ARRAY_OP;
+            left_child_of_root->left = leftnode;
+
+            rightnode->varName = ".";
+
+            left_child_of_root->right = rightnode;
+
+            rightnode->parent = left_child_of_root;
+            leftnode->parent = left_child_of_root;
+
+            return left_child_of_root;
+        } else if (t.token_type == LPAREN || t.token_type == ID || t.token_type == NUM) {
+            //          []
+            //       ____|____
+            //       |       |
+            //      ID      expr
+            rightnode = parse_expr();
+
+            expect(RBRAC);
+
+            exprNode* left_child_of_root = new exprNode();
+
+            left_child_of_root->opType = ARRAY_ELEM_OP;
+
+            left_child_of_root->left = leftnode;
+            left_child_of_root->right = rightnode;
+
+            rightnode->parent = left_child_of_root;
+            leftnode->parent = left_child_of_root;
+
+            return left_child_of_root;
+        }
+    } else if (t.token_type == EQUAL) {
+        // Return only leftnode as all we have on LHS is an ID
+        return leftnode;
     }
 }
 
