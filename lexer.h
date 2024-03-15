@@ -13,7 +13,7 @@
 
 // ------- token types -------------------
 
-typedef enum { END_OF_FILE = 0,
+typedef enum { END_OF_FILE,
     SCALAR, ARRAY, OUTPUT, PLUS, MINUS, DIV, MULT,
     EQUAL, SEMICOLON,
     LBRAC, RBRAC, LPAREN, RPAREN, LBRACE, RBRACE,

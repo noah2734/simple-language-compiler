@@ -15,7 +15,6 @@ void parse_and_generate_AST()
     Parser parser;
     parser.parse_program();
     parser.printTree();
-	cout << "1" << endl;
 }
 
 // Task 2

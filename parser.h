@@ -14,6 +14,7 @@ typedef enum {
 typedef enum {
     EQUAL_OP,
     ID_OP,
+    NUM_OP,
     MINUS_OP,
     PLUS_OP,
     MULT_OP,
@@ -61,7 +62,7 @@ struct stackNode {
 class Parser {
 
 private:
-    const std::vector<std::string> expr_rhs = {"E-E", "E+E", "E*E", "E/E", "(E)","E[E]", "E[.]", "ID", "NUM"};
+    const std::vector<std::string> expr_rhs = {"E-E", "E+E", "E*E", "E/E", "(E)","E[E]", "E[.]"};
     const char table[12][12] = {
  // stack -> |+|  |-|  |*|  |/|  |(|  |)|  |[|  |.|  |]|  |num||id| |$|
 // input      0    1    2    3    4    5    6    7    8    9    10   11
@@ -83,6 +84,8 @@ private:
     std::vector<stackNode> stack;
     std::vector<std::string> scalar_IDs;
     std::vector<std::string> array_IDs;
+    bool isVariableAccess;
+    bool start_spaces = false;
 
 public:
 
@@ -129,6 +132,12 @@ public:
     void traverse_and_print(exprNode* node);
 
     void printTree();
+
+    void printStack();
+
+    void traverse_and_print_level(exprNode* node, int level);
+
+    int height(exprNode* node);
 };
 
 #endif  
