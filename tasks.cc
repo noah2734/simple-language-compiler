@@ -20,7 +20,11 @@ void parse_and_generate_AST()
 // Task 2
 void parse_and_type_check()
 {
-	cout << "2" << endl;
+    Parser parser;
+    parser.parse_program();
+    parser.type_check();
+    parser.print_typecheck_statement();
+	//cout << "2" << endl;
 }
 
 // Task 3

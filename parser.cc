@@ -5,8 +5,16 @@ void Parser::syntax_error() {
     exit(1);
 }
 
-Token Parser::peek_symbol() {
+Token Parser::expect(TokenType expected_type) 
+{
+    Token t = lexer.GetToken();
+    if (t.token_type != expected_type) {
+        syntax_error();
+    }
+    return t;
+}
 
+Token Parser::peek_symbol() {
 
     Token t1 = lexer.peek(1);
     Token t2 = lexer.peek(2);
@@ -16,7 +24,7 @@ Token Parser::peek_symbol() {
     } else if (t1.token_type == RBRAC && t2.token_type == EQUAL) {
         return Token{"", END_OF_FILE, -1};
     } else if (t1.token_type == RBRAC && t2.token_type == SEMICOLON) {
-        if (isVariableAccess) {
+            if (isVariableAccess) {
             return Token{"", END_OF_FILE, -1};
         } else {return t1;}
     } else {
@@ -71,9 +79,6 @@ int Parser::getPrecedenceKey(Token token) {
         case END_OF_FILE:
             return 11;
             break;
-        default:
-            syntax_error();
-            return -1;
     }
 }
 
@@ -117,9 +122,22 @@ void Parser::reduce() {
         if (tempStack[0].term.token_type == ID) {
             exprNode* exprRoot = new exprNode();
             exprRoot->opType = ID_OP;
-            exprRoot->type = SCALAR_E;
+            std::string id_lexeme = tempStack[0].term.lexeme;
+            //assign type
+            bool found = false;
+            for (auto id : scalar_IDs) {
+                if (id_lexeme == id) {
+                    found = true;
+                }
+            }
 
-            exprRoot->varName = tempStack[0].term.lexeme;
+            if (found) {
+                exprRoot->type = SCALAR_TYPE;
+            } else {
+                exprRoot->type = ERROR_TYPE;
+            }
+
+            exprRoot->varName = id_lexeme;
 
             exprRoot->line_no = tempStack[0].term.line_no;
 
@@ -128,9 +146,11 @@ void Parser::reduce() {
         } else if (tempStack[0].term.token_type == NUM) {
             exprNode* exprRoot = new exprNode();
             exprRoot->opType = NUM_OP;
-            exprRoot->type = SCALAR_E;
+             std::string num_lexeme = tempStack[0].term.lexeme;
+            //assign type
+            exprRoot->type = SCALAR_TYPE;
 
-            exprRoot->varName = tempStack[0].term.lexeme;
+            exprRoot->varName = num_lexeme;
 
             exprRoot->line_no = tempStack[0].term.line_no;
 
@@ -181,9 +201,6 @@ void Parser::reduce() {
                 case END_OF_FILE:
                     exprString += "$";
                     break;
-                default:
-                    syntax_error();
-                    break;
             }
         }
     }
@@ -206,13 +223,21 @@ void Parser::reduce() {
 
             tempStack[0].expr->parent = exprRoot;
             tempStack[2].expr->parent = exprRoot;
+
+            if (tempStack[0].expr->type == SCALAR_TYPE && tempStack[2].expr->type == SCALAR_TYPE) {
+                exprRoot->type = SCALAR_TYPE;
+            } else if (tempStack[0].expr->type == ARRAY_TYPE && tempStack[2].expr->type == ARRAY_TYPE) {
+                exprRoot->type = ARRAY_TYPE;
+            } else {
+                exprRoot->type = ERROR_TYPE;
+            }
+
             stack.push_back(stackNode{EXPR, exprRoot});
             return;
     } else if (exprString == "E+E") {
         
         exprNode* exprRoot = new exprNode();
         exprRoot->opType = PLUS_OP;
-        exprRoot->type = SCALAR_E;
 
         exprRoot->varName = "+";
 
@@ -223,13 +248,21 @@ void Parser::reduce() {
 
         tempStack[0].expr->parent = exprRoot;
         tempStack[2].expr->parent = exprRoot;
+
+        if (tempStack[0].expr->type == SCALAR_TYPE && tempStack[2].expr->type == SCALAR_TYPE) {
+            exprRoot->type = SCALAR_TYPE;
+        } else if (tempStack[0].expr->type == ARRAY_TYPE && tempStack[2].expr->type == ARRAY_TYPE) {
+            exprRoot->type = ARRAY_TYPE;
+        } else {
+            exprRoot->type = ERROR_TYPE;
+        }
+
         stack.push_back(stackNode{EXPR, exprRoot});
         return;
     } else if (exprString == "E*E") {
 
         exprNode* exprRoot = new exprNode();
         exprRoot->opType = MULT_OP;
-        exprRoot->type = SCALAR_E;
 
         exprRoot->varName = "*";
 
@@ -241,13 +274,20 @@ void Parser::reduce() {
         tempStack[0].expr->parent = exprRoot;
         tempStack[2].expr->parent = exprRoot;
 
+        if (tempStack[0].expr->type == SCALAR_TYPE && tempStack[2].expr->type == SCALAR_TYPE) {
+            exprRoot->type = SCALAR_TYPE;
+        } else if (tempStack[0].expr->type == ARRAY_TYPE && tempStack[2].expr->type == ARRAY_TYPE) {
+            exprRoot->type = SCALAR_TYPE;
+        } else {
+            exprRoot->type = ERROR_TYPE;
+        }
+
         stack.push_back(stackNode{EXPR, exprRoot});
         return;
     } else if (exprString == "E/E") {
 
         exprNode* exprRoot = new exprNode();
         exprRoot->opType = DIV_OP;
-        exprRoot->type = SCALAR_E;
 
         exprRoot->varName = "/";
 
@@ -258,6 +298,14 @@ void Parser::reduce() {
 
         tempStack[0].expr->parent = exprRoot;
         tempStack[2].expr->parent = exprRoot;
+
+        if (tempStack[0].expr->type == SCALAR_TYPE && tempStack[2].expr->type == SCALAR_TYPE) {
+            exprRoot->type = SCALAR_TYPE;
+        } else if (tempStack[0].expr->type == ARRAY_TYPE && tempStack[2].expr->type == ARRAY_TYPE) {
+            exprRoot->type = ERROR_TYPE;
+        } else {
+            exprRoot->type = ERROR_TYPE;
+        }
 
         stack.push_back(stackNode{EXPR, exprRoot});
         return;
@@ -271,7 +319,6 @@ void Parser::reduce() {
 
         exprNode* exprRoot = new exprNode();
         exprRoot->opType = ARRAY_ELEM_OP;
-        exprRoot->type = ARRAY_E;
 
         exprRoot->varName = "[]";
 
@@ -282,20 +329,30 @@ void Parser::reduce() {
 
         tempStack[0].expr->parent = exprRoot;
         tempStack[2].expr->parent = exprRoot;
+
+        if (tempStack[2].expr->type != SCALAR_TYPE) {
+            exprRoot->type = ERROR_TYPE;
+        } else if (tempStack[0].expr->type == ARRAY_DECL_TYPE && tempStack[2].expr->type == SCALAR_TYPE) {
+            exprRoot->type = SCALAR_TYPE;
+        } else if (tempStack[0].expr->type == SCALAR_TYPE || tempStack[0].expr->type == ERROR_TYPE) {
+            exprRoot->type = ERROR_TYPE;
+        } else {
+            exprRoot->type = ERROR_TYPE;
+        }
+
         stack.push_back(stackNode{EXPR, exprRoot});
         return;
     } else if (exprString == "E[.]") {
 
         exprNode* exprRoot = new exprNode();
         exprRoot->opType = ARRAY_ELEM_OP;
-        exprRoot->type = ARRAY_E;
+        
 
         exprRoot->varName = "[.]";
 
         exprRoot->line_no = tempStack[1].term.line_no;
 
         exprRoot->left = tempStack[0].expr;
-        tempStack[0].expr->type = ARRAY_DECL;
         
 
         exprRoot->left = tempStack[0].expr;
@@ -303,20 +360,16 @@ void Parser::reduce() {
 
         tempStack[0].expr->parent = exprRoot;
 
+        if (tempStack[0].expr->type == SCALAR_TYPE) {
+            exprRoot->type = ARRAY_TYPE;
+        } else {
+            exprRoot->type = ERROR_TYPE;
+        }
+
         stack.push_back(stackNode{EXPR, exprRoot});
         return;
     }
     
-}
-
-
-Token Parser::expect(TokenType expected_type) 
-{
-    Token t = lexer.GetToken();
-    if (t.token_type != expected_type) {
-        syntax_error();
-    }
-    return t;
 }
 
 void Parser::parse_program() 
@@ -425,9 +478,7 @@ void Parser::parse_output_stmt()
 {
     expect(OUTPUT);
 
-    exprNode* root = parse_variable_access();
-
-    treeRoots.push_back(root);
+    parse_variable_access();
 
     expect(SEMICOLON);
 }
@@ -440,6 +491,7 @@ exprNode* Parser::parse_variable_access()
     exprNode* leftnode = new exprNode();
     leftnode->opType = ID_OP;
     leftnode->varName = t.lexeme;
+    //assign type
 
     t = lexer.peek(1);
 
@@ -461,6 +513,22 @@ exprNode* Parser::parse_variable_access()
 
             exprNode* left_child_of_root = new exprNode();
 
+            bool found = false;
+            for (auto& id : array_IDs) {
+                if (leftnode->varName == id) {
+                    found = true;
+                }
+            }
+
+            if (found) {
+                leftnode->type = ARRAY_DECL_TYPE;
+                left_child_of_root->type = ARRAY_TYPE;
+            } else {
+                leftnode->type = ERROR_TYPE;
+                left_child_of_root->type = ERROR_TYPE;
+            }
+
+
             left_child_of_root->opType = WHOLE_ARRAY_OP;
             left_child_of_root->varName = "[.]"; 
 
@@ -481,6 +549,25 @@ exprNode* Parser::parse_variable_access()
 
             exprNode* left_child_of_root = new exprNode();
 
+            bool found = false;
+            for (auto& id : array_IDs) {
+                if (leftnode->varName == id) {
+                    found = true;
+                }
+            }
+
+            if (found) {
+                leftnode->type = ARRAY_DECL_TYPE;
+                if (rightnode->type == SCALAR_TYPE) {
+                    left_child_of_root->type = ARRAY_TYPE;
+                } else {
+                    left_child_of_root->type = ERROR_TYPE;
+                }
+            } else {
+                leftnode->type = ERROR_TYPE;
+                left_child_of_root->type = ERROR_TYPE;
+            }
+
             left_child_of_root->opType = ARRAY_ELEM_OP;
             left_child_of_root->varName = "[]";
 
@@ -493,16 +580,22 @@ exprNode* Parser::parse_variable_access()
 
 
             return left_child_of_root;
-        } else {
-            syntax_error();
-            return nullptr;
         }
     } else if (t.token_type == EQUAL) {
         // Return only leftnode as all we have on LHS is an ID
+        bool found = false;
+        for (auto& id : scalar_IDs) {
+            if (leftnode->varName == id) {
+                found = true;
+            }
+        }
+
+        if (found) {
+            leftnode->type = SCALAR_TYPE;
+        } else {
+            leftnode->type = ERROR_TYPE;
+        }
         return leftnode;
-    } else {
-        syntax_error();
-        return nullptr;
     }
 }
 
@@ -512,8 +605,9 @@ exprNode* Parser::parse_expr()
         stack.pop_back();
     }
     stack.push_back(stackNode{TERM, nullptr, Token{"", END_OF_FILE, -1}});
-
+    int i = 0;
     while (1) {
+        i++;
 
         Token inputToken = peek_symbol();
     
@@ -581,6 +675,7 @@ void Parser::traverse_and_print_level(exprNode* root, int level) {
 }
 
 int Parser::height(exprNode* node) {
+
     if (node == nullptr) {
         return 0;
     } else {
@@ -595,3 +690,43 @@ int Parser::height(exprNode* node) {
         }
     }
 } 
+
+void Parser::type_error_in_tree(exprNode* node) {
+    if (node) {
+        if (node->type == ERROR) {
+            tree_error = true;
+        }
+        return type_error_in_tree(node->left);
+        return type_error_in_tree(node->right);
+    }
+}
+
+
+void Parser::type_check() {
+
+    for (auto& tree : treeRoots) {
+        int line_number = tree->line_no;
+        bool has_error = false;
+
+        if (!(tree->left->type == ARRAY_TYPE || tree->right->type == SCALAR_TYPE)) {
+            line_numbers.push_back(line_number);
+        } else {
+            type_error_in_tree(tree);
+            if (tree_error) {
+                line_numbers.push_back(line_number);
+                tree_error = false;
+            }
+        }
+    }
+}
+
+void Parser::print_typecheck_statement() {
+    if (line_numbers.empty()) {
+        std::cout << "Amazing! No type errors here :)";
+    } else {
+        std::cout << "Amazing! No type errors here :)" << std::endl << std::endl;
+        for (auto& line_number : line_numbers) {
+            std::cout << "Line " << line_number << std::endl;
+        }
+    }
+}

@@ -24,10 +24,10 @@ typedef enum {
 } operatorType;
 
 typedef enum {
-    SCALAR_E,
-    ARRAY_E,
-    ARRAY_DECL,
-    ERROR_E
+    SCALAR_TYPE,
+    ARRAY_TYPE,
+    ARRAY_DECL_TYPE,
+    ERROR_TYPE
 } exprType;
 
 struct exprNode {
@@ -84,8 +84,10 @@ private:
     std::vector<stackNode> stack;
     std::vector<std::string> scalar_IDs;
     std::vector<std::string> array_IDs;
+    std::vector<int> line_numbers; // for type errors, if empty, no type errors
     bool isVariableAccess;
     bool start_spaces = false;
+    bool tree_error = false;
 
 public:
 
@@ -138,6 +140,12 @@ public:
     void traverse_and_print_level(exprNode* node, int level);
 
     int height(exprNode* node);
+
+    void type_check();
+
+    void type_error_in_tree(exprNode* node);
+
+    void print_typecheck_statement();
 };
 
 #endif  
