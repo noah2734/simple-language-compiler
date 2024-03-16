@@ -16,7 +16,7 @@ Token Parser::peek_symbol() {
     } else if (t1.token_type == RBRAC && t2.token_type == EQUAL) {
         return Token{"", END_OF_FILE, -1};
     } else if (t1.token_type == RBRAC && t2.token_type == SEMICOLON) {
-            if (isVariableAccess) {
+        if (isVariableAccess) {
             return Token{"", END_OF_FILE, -1};
         } else {return t1;}
     } else {
@@ -71,6 +71,9 @@ int Parser::getPrecedenceKey(Token token) {
         case END_OF_FILE:
             return 11;
             break;
+        default:
+            syntax_error();
+            return -1;
     }
 }
 
@@ -177,6 +180,9 @@ void Parser::reduce() {
                     break;
                 case END_OF_FILE:
                     exprString += "$";
+                    break;
+                default:
+                    syntax_error();
                     break;
             }
         }
@@ -419,7 +425,9 @@ void Parser::parse_output_stmt()
 {
     expect(OUTPUT);
 
-    parse_variable_access();
+    exprNode* root = parse_variable_access();
+
+    treeRoots.push_back(root);
 
     expect(SEMICOLON);
 }
@@ -485,10 +493,16 @@ exprNode* Parser::parse_variable_access()
 
 
             return left_child_of_root;
+        } else {
+            syntax_error();
+            return nullptr;
         }
     } else if (t.token_type == EQUAL) {
         // Return only leftnode as all we have on LHS is an ID
         return leftnode;
+    } else {
+        syntax_error();
+        return nullptr;
     }
 }
 
@@ -498,9 +512,8 @@ exprNode* Parser::parse_expr()
         stack.pop_back();
     }
     stack.push_back(stackNode{TERM, nullptr, Token{"", END_OF_FILE, -1}});
-    int i = 0;
+
     while (1) {
-        i++;
 
         Token inputToken = peek_symbol();
     
