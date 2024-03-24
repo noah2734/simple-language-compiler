@@ -462,6 +462,7 @@ void Parser::parse_assign_stmt()
     Token t = expect(EQUAL);
 
     root->left = left_child_of_root;
+    root->line_no = t.line_no;
     
     isVariableAccess = false;
     exprNode* right_child_of_root = parse_expr();
@@ -693,11 +694,11 @@ int Parser::height(exprNode* node) {
 
 void Parser::type_error_in_tree(exprNode* node) {
     if (node) {
-        if (node->type == ERROR) {
+        if (node->type == ERROR_TYPE) {
             tree_error = true;
         }
-        return type_error_in_tree(node->left);
-        return type_error_in_tree(node->right);
+        type_error_in_tree(node->left);
+        type_error_in_tree(node->right);
     }
 }
 
@@ -724,9 +725,21 @@ void Parser::print_typecheck_statement() {
     if (line_numbers.empty()) {
         std::cout << "Amazing! No type errors here :)";
     } else {
-        std::cout << "Amazing! No type errors here :)" << std::endl << std::endl;
+        std::cout << "Disappointing expression type error :(" << std::endl << std::endl;
+        std::vector<int> no_dups;
         for (auto& line_number : line_numbers) {
-            std::cout << "Line " << line_number << std::endl;
+            bool is_dup = false;
+            for (auto& num : no_dups) {
+                if (line_number == num) {
+                    is_dup = true;
+                }
+            }
+            if (is_dup) {
+                continue;
+            } else {
+                std::cout << "Line " << line_number << std::endl;
+                no_dups.push_back(line_number);
+            }
         }
     }
 }
