@@ -81,11 +81,14 @@ private:
     };
     LexicalAnalyzer lexer;
     std::vector<exprNode*> treeRoots;
+    std::vector<exprNode*> outputRoots;
     std::vector<stackNode> stack;
     std::vector<std::string> scalar_IDs;
     std::vector<std::string> array_IDs;
-    std::vector<int> line_numbers; // for type errors, if empty, no type errors
+    std::vector<int> expr_error_line_numbers; 
+    std::vector<int> assignment_error_line_numbers;
     bool isVariableAccess;
+    bool isOutput = false;
     bool start_spaces = false;
     bool tree_error = false;
 
