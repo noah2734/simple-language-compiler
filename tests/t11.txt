@@ -1,7 +1,5 @@
 SCALAR x y z
-ARRAY a b c
+ARRAY a b c 
 {
-    x = a[.]*b[.] - b[.];
-    x = a[.]*b[.] - b[.]*c[.];
-    x = a[.]*b[.] - b[.];
+    a[.] = b;
 }

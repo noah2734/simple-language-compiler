@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <vector>
+#include <algorithm>
+#include <map>
 #include "lexer.h"
 
 
@@ -58,6 +60,43 @@ struct stackNode {
     Token term;
 };
 
+typedef enum {
+    IMMT,
+    DRT,
+} valueType;
+
+typedef enum {
+    ASSIGN_INS,
+    OUTPUT_INS,
+} InstructionType;
+
+struct codeNode {
+    InstructionType iType;
+
+};
+
+class MemoryManager {
+
+private:
+    std::map<std::string, int> ScalarMemory;
+    std::map<std::string, int[]> ArrayMemory;
+public:
+    void declarScalarVariable(const std::string varName) {
+        ScalarMemory.insert(std::make_pair(varName, 0));
+    }
+    
+    void assignScalarValue(std::string varName, int value) {
+        ScalarMemory[varName] = value;
+    }
+
+    int scalarValue(std::string varName) {
+        return ScalarMemory[varName];
+    }
+
+    int scalarLocation(std::string varName) {
+        return std::distance(std::begin(ScalarMemory), ScalarMemory.find(varName));
+    }
+};
 
 class Parser {
 
@@ -80,6 +119,7 @@ private:
 /* |$| */   {'>', '>', '>', '>', 'e', '>', 'e', 'e', '>', '>', '>', 'a'},// 11
     };
     LexicalAnalyzer lexer;
+    MemoryManager mem;
     std::vector<exprNode*> treeRoots;
     std::vector<exprNode*> outputRoots;
     std::vector<stackNode> stack;
