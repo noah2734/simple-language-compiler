@@ -1,8 +1,4 @@
-/*
- * Copyright (C) Mohsen Zohrevandi, 2017
- *               Rida Bazzi 2022
- * Do not share this file with anyone
- */
+//Noah McClelland
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
